@@ -95,14 +95,46 @@ begin
 	-- CONCURRENT STATEMENTS ------------------------------------------------------------------------------
 	
 	-- Next State Logic
-  
+    f_Q_next <= f_Q when ( i_stop = '1' ) else --when stopped the floor will stay the same, else
+    --going up
+        s_floor2 when (f_Q = s_floor1 AND i_up_down = '1') else -- the next floor will be 2 when the current floor is 1 and the input is up 
+        s_floor3 when (f_Q = s_floor2 AND i_up_down = '1') else
+        s_floor4 when (f_Q = s_floor3 AND i_up_down = '1') else
+        s_floor4 when (f_Q = s_floor4 AND i_up_down = '1') else --edge case, if the floor is at the top and you press up
+    -- going down
+        s_floor3 when (f_Q = s_floor4 AND i_up_down = '0') else
+        s_floor2 when (f_Q = s_floor3 AND i_up_down = '0') else
+        s_floor1 when (f_Q = s_floor2 AND i_up_down = '0') else
+        s_floor1 when (f_Q = s_floor1 AND i_up_down = '0') else --edge case, if the floor is at the bottom and you press down
+            
+    -- default case
+        s_floor1; --if no other cases match, it defaults to floor 1
+    
 	-- Output logic
+	with f_Q select
+    o_floor <= "0001" when s_floor1,
+    "0010" when s_floor2,
+    "0011" when s_floor3,
+    "0100" when s_floor4,
+    
+    "0010" when others; -- default is floor1
 
 	-------------------------------------------------------------------------------------------------------
 	
 	-- PROCESSES ------------------------------------------------------------------------------------------	
-	
-	-- State register ------------
+	--- state memory w/ synchronous reset ---
+    register_proc : process (i_clk)
+    begin
+        if (rising_edge(i_clk)) then
+            if i_reset = '1' then 
+                f_Q <= s_floor2; 
+            else
+                f_Q <= f_Q_next;
+            end if;
+        end if;
+    end process register_proc;
+    ---
+
 	
 	
 	-------------------------------------------------------------------------------------------------------
